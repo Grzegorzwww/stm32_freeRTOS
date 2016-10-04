@@ -6,16 +6,25 @@
 C_SRCS += \
 ../src/_initialize_hardware.c \
 ../src/_write.c \
+../src/adc.c \
+../src/buffor_adc.c \
+../src/functions.c \
 ../src/main.c 
 
 OBJS += \
 ./src/_initialize_hardware.o \
 ./src/_write.o \
+./src/adc.o \
+./src/buffor_adc.o \
+./src/functions.o \
 ./src/main.o 
 
 C_DEPS += \
 ./src/_initialize_hardware.d \
 ./src/_write.d \
+./src/adc.d \
+./src/buffor_adc.d \
+./src/functions.d \
 ./src/main.d 
 
 

@@ -1,11 +1,24 @@
 #include "main.h"
+#include "adc.h"
 
 xQueueHandle buttonPushesQueue;
+extern UART_HandleTypeDef huart5;
+extern __IO ITStatus UartReady;
+extern __IO ADC_HandleTypeDef hadc1;
 
-int
-main(int argc, char* argv[])
+extern unsigned char data_to_send[3];
+extern unsigned char data_to_read[3];
+
+uint16_t pomiary[3];
+extern volatile communication_frame_t communication_frame_out;
+
+
+
+int main(int argc, char* argv[])
 {
+
 	initializeHardware();
+
 
 		/* Create IPC variables */
 		buttonPushesQueue = xQueueCreate(10, sizeof(int));
@@ -20,13 +33,72 @@ main(int argc, char* argv[])
 		createTask(toggleLedWithIpc, "Task3");
 		createTask(drawSmlLogo, "Logo");
 		createTask(dravText, "Tekst");
+		createTask(sendUartData, "sendUSART");
+		createTask(getDataFromAdc, "measure_adc_task");
+
 
 		/* Start the RTOS Scheduler */
 		vTaskStartScheduler();
 
 		/* HALT */
-		while (1)
-			;
+		while (1){
+
+		}
+
+}
+
+
+
+
+
+void initializeHardware() {
+
+	HAL_Init();
+	InitUART5();
+	init_adc();
+	initJoyButton();
+
+
+
+
+
+	BSP_LED_Init(LED3);
+	BSP_LED_Init(LED4);
+
+	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
+
+	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
+
+	BSP_LED_On(LED3);
+	BSP_LED_Off(LED3);
+	BSP_LED_Off(LED4);
+
+	BSP_LCD_Init();
+	BSP_LCD_LayerDefaultInit(LCD_BACKGROUND_LAYER, LCD_FRAME_BUFFER);
+	BSP_LCD_SetLayerVisible(LCD_BACKGROUND_LAYER, ENABLE);
+	BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
+	BSP_LCD_DisplayOn();
+
+
+}
+
+
+void sendUartData(void *pvParameters){
+
+
+	while(1){
+		delayMillis(50);
+		sendDataFrame();
+	}
+}
+
+void getDataFromAdc(void * pvParameters){
+	while(1){
+		BSP_LED_Toggle(0);
+		addMeasurement();
+		//delayMillis(500);
+	}
+
 }
 
 void createTask(TaskFunction_t code, const char * const name) {
@@ -39,11 +111,11 @@ void createTask(TaskFunction_t code, const char * const name) {
  */
 void toggleLedWithTimer(void *pvParameters) {
 	while (1) {
-		BSP_LED_Toggle(LED3);
+		//BSP_LED_Toggle(LED3);
 		delayMillis(1500);
+
 	}
 }
-
 /**
  * TASK 2: Detect Button Press And Signal Event via Inter-Process Communication (IPC)
  */
@@ -53,10 +125,12 @@ void detectButtonPress(void *pvParameters) {
 
 	while (1) {
 		/* Detect Button Press  */
+		scanJoyButtton(0);
+
 		if (BSP_PB_GetState(BUTTON_KEY) > 0) {
+
 			/* Debounce */
 			while (BSP_PB_GetState(BUTTON_KEY) > 0)
-				delayMillis(100);
 			while (BSP_PB_GetState(BUTTON_KEY) == 0)
 				delayMillis(100);
 
@@ -116,32 +190,13 @@ void drawSmlLogo(void *pvParameters) {
 void dravText(void *pvParameters){
 
 	while(1){
-		//char ja[10] = {'G', 'r', 'z', 'e', 's','i', 'e', 'k', '\0'};
 		BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
 		BSP_LCD_DisplayStringAt(0, 25, "Grzesiek W", CENTER_MODE);
-		//BSP_LCD_DrawPixel(50, 50, 125);
 	}
 
-
 }
 
-void initializeHardware() {
 
-	HAL_Init();
-
-	BSP_LED_Init(LED3);
-	BSP_LED_Init(LED4);
-	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
-
-	BSP_LED_On(LED3);
-	BSP_LED_Off(LED4);
-
-	BSP_LCD_Init();
-	BSP_LCD_LayerDefaultInit(LCD_BACKGROUND_LAYER, LCD_FRAME_BUFFER);
-	BSP_LCD_SetLayerVisible(LCD_BACKGROUND_LAYER, ENABLE);
-	BSP_LCD_SelectLayer(LCD_BACKGROUND_LAYER);
-	BSP_LCD_DisplayOn();
-}
 
 void delayMillis(uint32_t millis) {
 	/*
@@ -166,24 +221,4 @@ void SysTick_Handler(void) {
 	HAL_IncTick();
 }
 
-void init_touch_screen(void){
 
-GPIO_InitTypeDef GPIO_InitStruct;
-
-/*Configure GPIO pin : PC9 */
-GPIO_InitStruct.Pin = GPIO_PIN_9;
-GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-GPIO_InitStruct.Pull = GPIO_PULLUP;
-GPIO_InitStruct.Speed = GPIO_SPEED_LOW ;
-GPIO_InitStruct.Alternate = GPIO_AF4_I2C3;
-HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-/*Configure GPIO pin : PA8 */
-GPIO_InitStruct.Pin = GPIO_PIN_8;
-GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-GPIO_InitStruct.Pull = GPIO_PULLUP;
-GPIO_InitStruct.Speed = GPIO_SPEED_LOW ;
-GPIO_InitStruct.Alternate = GPIO_AF4_I2C3;
-HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-}

@@ -81,7 +81,8 @@ src/main.o: ../src/main.c ../include/main.h \
  ../include/FreeRTOS/Source/include/task.h \
  ../include/FreeRTOS/Source/include/list.h \
  ../include/FreeRTOS/Source/include/semphr.h \
- ../include/FreeRTOS/Source/include/queue.h
+ ../include/FreeRTOS/Source/include/queue.h ../include/functions.h \
+ ../include/adc.h
 
 ../include/main.h:
 
@@ -254,3 +255,7 @@ src/main.o: ../src/main.c ../include/main.h \
 ../include/FreeRTOS/Source/include/semphr.h:
 
 ../include/FreeRTOS/Source/include/queue.h:
+
+../include/functions.h:
+
+../include/adc.h:
